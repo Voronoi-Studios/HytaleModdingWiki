@@ -35,6 +35,14 @@ export default function AppFooter() {
                   My Mods
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="https://status.hytalemodding.dev"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Status
+                </Link>
+              </li>
             </ul>
           </div>
 
