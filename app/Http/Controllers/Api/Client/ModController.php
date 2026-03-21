@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Client;
 
 use App\Models\Mod;
+use App\Models\Page;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -31,11 +32,7 @@ class ModController extends ClientController
                         'username' => $mod->owner->username,
                         'avatar_url' => $mod->owner->avatar_url,
                     ],
-                    'index' => $mod->indexPage ? [
-                        'id' => $mod->indexPage->id,
-                        'title' => $mod->indexPage->title,
-                        'slug' => $mod->indexPage->slug,
-                    ] : null,
+                    'index' => $mod->indexPage ? $this->pagePayload($mod->indexPage) : null,
                     'created_at' => $mod->created_at->toISOString(),
                     'updated_at' => $mod->updated_at->toISOString(),
                 ];
@@ -99,9 +96,7 @@ class ModController extends ClientController
                 $children = $this->buildPageHierarchy($pages, $page->id);
 
                 return [
-                    'id' => $page->id,
-                    'title' => $page->title,
-                    'slug' => $page->slug,
+                    ...$this->pagePayload($page),
                     'children' => $children->values()->toArray(),
                 ];
             })
@@ -129,19 +124,22 @@ class ModController extends ClientController
         $page = $mod->pages()->where('slug', $page_slug)->firstOrFail();
 
         return response()->json([
+            'page' => $this->pagePayload($page),
             'content' => $page->content,
-            'parent' => $page->parent ? [
-                'id' => $page->parent->id,
-                'title' => $page->parent->title,
-                'slug' => $page->parent->slug,
-            ] : null,
-            'children' => $page->children()->orderBy('order_index')->get()->map(function ($child) {
-                return [
-                    'id' => $child->id,
-                    'title' => $child->title,
-                    'slug' => $child->slug,
-                ];
+            'parent' => $page->parent ? $this->pagePayload($page->parent) : null,
+            'children' => $page->children()->orderBy('order_index')->get()->map(function (Page $child) {
+                return $this->pagePayload($child);
             })->values()->toArray(),
         ]);
+    }
+
+    private function pagePayload(Page $page): array
+    {
+        return [
+            'id' => $page->id,
+            'title' => $page->title,
+            'slug' => $page->slug,
+            'kind' => $page->kind,
+        ];
     }
 }
