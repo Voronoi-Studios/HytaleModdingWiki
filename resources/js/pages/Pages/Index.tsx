@@ -1,5 +1,6 @@
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
+import type { DragStart } from '@hello-pangea/dnd';
 import {
   BookOpenIcon,
   PlusIcon,
@@ -59,9 +60,26 @@ export default function PagesIndex({ mod, pages, canEdit }: Props) {
   const [pagesList, setPagesList] = useState(pages);
   const [isDragDisabled, setIsDragDisabled] = useState(false);
   const [isDragModeEnabled, setIsDragModeEnabled] = useState(false);
+  const [activeDragParentId, setActiveDragParentId] = useState<
+    string | null | undefined
+  >(undefined);
   const isGithubManaged = Boolean(mod.github_repository_url);
 
+  const getParentIdFromDroppableId = (droppableId: string): string | null => {
+    if (droppableId === 'pages-root') {
+      return null;
+    }
+
+    if (droppableId.startsWith('pages-')) {
+      return droppableId.slice('pages-'.length);
+    }
+
+    return null;
+  };
+
   const handleDragEnd = async (result: DropResult) => {
+    setActiveDragParentId(undefined);
+
     if (
       !result.destination ||
       !canEdit ||
@@ -73,16 +91,39 @@ export default function PagesIndex({ mod, pages, canEdit }: Props) {
 
     const { source, destination, draggableId } = result;
 
+    if (source.droppableId !== destination.droppableId) {
+      return;
+    }
+
+    if (source.index === destination.index) {
+      return;
+    }
+
+    const sourceParentId = getParentIdFromDroppableId(source.droppableId);
+
     const draggedPage = pagesList.find((p) => p.id === draggableId);
     if (!draggedPage) return;
 
     const sameLevelPages = pagesList
-      .filter((p) => p.parent_id === draggedPage.parent_id)
+      .filter((p) => (p.parent_id ?? null) === sourceParentId)
       .sort((a, b) => a.order_index - b.order_index);
+
+    if (!sameLevelPages.some((page) => page.id === draggedPage.id)) {
+      return;
+    }
 
     const reorderedPages = Array.from(sameLevelPages);
     const [removed] = reorderedPages.splice(source.index, 1);
-    reorderedPages.splice(destination.index, 0, removed);
+    if (!removed) {
+      return;
+    }
+
+    const safeDestinationIndex = Math.min(
+      Math.max(destination.index, 0),
+      reorderedPages.length,
+    );
+
+    reorderedPages.splice(safeDestinationIndex, 0, removed);
 
     const pagesToUpdate = reorderedPages.map((page, index) => ({
       id: page.id,
@@ -123,6 +164,15 @@ export default function PagesIndex({ mod, pages, canEdit }: Props) {
       setPagesList(pages);
       setIsDragDisabled(false);
     }
+  };
+
+  const handleDragStart = (start: DragStart) => {
+    if (!canEdit || !isDragModeEnabled || isGithubManaged) {
+      return;
+    }
+
+    const draggedPage = pagesList.find((page) => page.id === start.draggableId);
+    setActiveDragParentId(draggedPage?.parent_id ?? null);
   };
 
   const renderDraggablePage = (
@@ -274,14 +324,20 @@ export default function PagesIndex({ mod, pages, canEdit }: Props) {
     parentId: string | null = null,
     level = 0,
     ancestorLines: boolean[] = [],
+    renderInsideCell = false,
   ) => {
     const sortedPages = [...pageList].sort(
       (a, b) => a.order_index - b.order_index,
     );
     const droppableId = parentId ? `pages-${parentId}` : 'pages-root';
+    const isDroppableDisabledByActiveDrag =
+      activeDragParentId !== undefined && activeDragParentId !== parentId;
 
-    return (
-      <Droppable droppableId={droppableId} isDropDisabled={!isDragModeEnabled}>
+    const droppableBody = (
+      <Droppable
+        droppableId={droppableId}
+        isDropDisabled={!isDragModeEnabled || isDroppableDisabledByActiveDrag}
+      >
         {(provided, snapshot) => (
           <tbody
             ref={provided.innerRef}
@@ -305,14 +361,19 @@ export default function PagesIndex({ mod, pages, canEdit }: Props) {
                     ancestorLines,
                   )}
 
-                  {page.children &&
-                    page.children.length > 0 &&
-                    renderPageList(
-                      page.children,
-                      page.id,
-                      level + 1,
-                      newAncestorLines,
-                    )}
+                  {page.children && page.children.length > 0 && (
+                    <tr className="border-0">
+                      <td colSpan={5} className="p-0">
+                        {renderPageList(
+                          page.children,
+                          page.id,
+                          level + 1,
+                          newAncestorLines,
+                          true,
+                        )}
+                      </td>
+                    </tr>
+                  )}
                 </React.Fragment>
               );
             })}
@@ -324,6 +385,16 @@ export default function PagesIndex({ mod, pages, canEdit }: Props) {
           </tbody>
         )}
       </Droppable>
+    );
+
+    if (!renderInsideCell) {
+      return droppableBody;
+    }
+
+    return (
+      <div className="pl-0">
+        <table className="min-w-full">{droppableBody}</table>
+      </div>
     );
   };
 
@@ -484,7 +555,10 @@ export default function PagesIndex({ mod, pages, canEdit }: Props) {
               </div>
             </div>
 
-            <DragDropContext onDragEnd={handleDragEnd}>
+            <DragDropContext
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
               <div className="overflow-hidden rounded-lg border border-border bg-card">
                 <table className="min-w-full">
                   <thead className="bg-muted/50">
