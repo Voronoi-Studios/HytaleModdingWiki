@@ -1,9 +1,21 @@
 import { Head, useForm } from '@inertiajs/react';
-import { ChevronRightIcon, PencilIcon, XIcon } from 'lucide-react';
+import {
+  ChevronRightIcon,
+  ExternalLinkIcon,
+  HelpCircle,
+  PencilIcon,
+  XIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +25,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -24,6 +41,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
@@ -103,6 +121,15 @@ export default function EditMod({ mod }: Props) {
     });
   };
 
+  const openCssEditor = () => {
+    patch(`/dashboard/mods/${mod.slug}`, {
+      forceFormData: true,
+      onSuccess: () => {
+        window.location.href = `/dashboard/mods/${mod.slug}/css-editor`;
+      },
+    });
+  };
+
   const deleteMod = () => {
     fetch(`/dashboard/mods/${mod.slug}`, {
       method: 'DELETE',
@@ -152,24 +179,12 @@ export default function EditMod({ mod }: Props) {
 
       <div className="space-y-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav className="mb-4 flex items-center justify-between text-sm text-primary">
-            <div>
-              <a
-                href={`/dashboard/mods/${mod.slug}`}
-                className="hover:underline"
-              >
-                {mod.name}
-              </a>
-              <ChevronRightIcon className="m-1 inline h-4 w-4" />
-              <span>Settings</span>
-            </div>
-            <a
-              href={`/dashboard/mods/${mod.slug}/css-editor`}
-              className="flex items-center gap-1.5 rounded-md border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-600 transition-colors hover:bg-violet-500/20 dark:text-violet-400"
-            >
-              <span>✨</span>
-              CSS Editor
+          <nav className="mb-4 flex items-center text-sm text-primary">
+            <a href={`/dashboard/mods/${mod.slug}`} className="hover:underline">
+              {mod.name}
             </a>
+            <ChevronRightIcon className="m-1 inline h-4 w-4" />
+            <span>Settings</span>
           </nav>
         </div>
 
@@ -230,251 +245,339 @@ export default function EditMod({ mod }: Props) {
           </div>
 
           <div className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-            <div className="space-y-6">
-              <Card className="bg-transparent">
-                <CardHeader>
-                  <CardTitle>Additional Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="visibility">Visibility</Label>
-                    <Select
-                      value={data.visibility}
-                      onValueChange={(
-                        value: 'public' | 'unlisted' | 'private',
-                      ) => setData('visibility', value)}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {visibilityOptions.map((option) => (
-                          <SelectItem
-                            key={option.value}
-                            value={option.value}
-                            className="flex w-full"
-                          >
-                            <div className="flex w-full items-center justify-between gap-4">
-                              <Badge
-                                variant="outline"
-                                className={getVisibilityColor(option.value)}
-                              >
-                                {option.label}
-                              </Badge>
-                              <div className="text-sm text-muted-foreground">
-                                {option.description}
-                              </div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.visibility && (
-                      <p className="mt-1 text-sm text-destructive">
-                        {errors.visibility}
-                      </p>
-                    )}
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Control who can access your mod documentation
-                    </p>
-                  </div>
+            <Tabs defaultValue="general">
+              <TabsList className="mb-6">
+                <TabsTrigger value="general">General</TabsTrigger>
+                <TabsTrigger value="github-sync">GitHub Sync</TabsTrigger>
+                <TabsTrigger value="custom-css">Custom CSS</TabsTrigger>
+              </TabsList>
 
-                  <Separator />
-
-                  <div>
-                    <Label htmlFor="icon">Mod Icon</Label>
-                    <div className="relative mt-2">
-                      <Input
-                        id="icon"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleIconChange}
-                        className={cn(
-                          'pr-10',
-                          errors.icon ? 'border-destructive' : '',
-                        )}
-                      />
-                      {(iconPreview || data.icon) && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="hover:text-destructive-foreground absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 hover:bg-muted"
-                          onClick={removeIcon}
-                        >
-                          <XIcon className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    {iconPreview && (
-                      <div className="mt-4 flex justify-center">
-                        <img
-                          src={iconPreview}
-                          alt="Icon preview"
-                          className="h-24 w-24 rounded-lg border object-cover"
-                        />
+              {/* General Tab */}
+              <TabsContent value="general">
+                <Card className="bg-transparent">
+                  <CardHeader className="border-b pb-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>General Settings</CardTitle>
+                        <CardDescription>
+                          Configure basic settings like visibility, mod icon,
+                          and external access.
+                        </CardDescription>
                       </div>
-                    )}
-                    {errors.icon && (
-                      <p className="mt-2 text-sm text-destructive">
-                        {errors.icon}
-                      </p>
-                    )}
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Optional. Upload a square image (PNG, JPG, GIF, WebP).
-                      Maximum size: 2MB.
-                    </p>
-                  </div>
-                  <Separator />
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="github_repository_url">
-                        GitHub Repository URL
-                      </Label>
-                      <Input
-                        id="github_repository_url"
-                        type="url"
-                        value={data.github_repository_url}
-                        onChange={(e) =>
-                          setData('github_repository_url', e.target.value)
-                        }
-                        placeholder="https://github.com/owner/repository"
-                        className={cn(
-                          errors.github_repository_url
-                            ? 'border-destructive'
-                            : '',
-                        )}
-                      />
-                      {errors.github_repository_url && (
-                        <p className="mt-1 text-sm text-destructive">
-                          {errors.github_repository_url}
-                        </p>
-                      )}
-                    </div>
 
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <HelpCircle className="h-6 w-6 cursor-pointer text-muted-foreground" />
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80" side="left">
+                          <div className="flex justify-between space-x-4">
+                            <div className="space-y-1">
+                              <p className="mb-5 text-sm">
+                                Here you can configure general settings for your
+                                mod, including visibility, mod icon, and
+                                external access. These settings control who can
+                                see your mod documentation, how it appears, and
+                                whether external applications can access it via
+                                API.
+                              </p>
+                            </div>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     <div>
-                      <Label htmlFor="github_repository_path">
-                        Repository Path
-                      </Label>
-                      <Input
-                        id="github_repository_path"
-                        type="text"
-                        value={data.github_repository_path}
-                        onChange={(e) =>
-                          setData('github_repository_path', e.target.value)
-                        }
-                        placeholder="docs"
-                        className={cn(
-                          errors.github_repository_path
-                            ? 'border-destructive'
-                            : '',
-                        )}
-                      />
-                      {errors.github_repository_path && (
+                      <Label htmlFor="visibility">Visibility</Label>
+                      <Select
+                        value={data.visibility}
+                        onValueChange={(
+                          value: 'public' | 'unlisted' | 'private',
+                        ) => setData('visibility', value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {visibilityOptions.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={option.value}
+                              className="flex w-full"
+                            >
+                              <div className="flex w-full items-center justify-between gap-4">
+                                <Badge
+                                  variant="outline"
+                                  className={getVisibilityColor(option.value)}
+                                >
+                                  {option.label}
+                                </Badge>
+                                <div className="text-sm text-muted-foreground">
+                                  {option.description}
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.visibility && (
                         <p className="mt-1 text-sm text-destructive">
-                          {errors.github_repository_path}
+                          {errors.visibility}
                         </p>
                       )}
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Optional subfolder to sync markdown from (for example:
-                        docs/guides). Leave blank to sync the repository root.
+                        Control who can access your mod documentation
                       </p>
                     </div>
 
-                    <p className="text-sm text-muted-foreground">
-                      When a GitHub URL is configured, pages are managed by sync
-                      and manual page create/edit is disabled.
-                    </p>
-                  </div>
-
-                  {/*
                     <Separator />
 
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="custom_domain">Custom Domain</Label>
+                    <div>
+                      <Label htmlFor="icon">Mod Icon</Label>
+                      <div className="relative mt-2">
                         <Input
-                          id="custom_domain"
-                          type="text"
-                          value={data.custom_domain}
-                          onChange={(e) =>
-                            setData('custom_domain', e.target.value.toLowerCase())
-                          }
-                          placeholder="docs.example.com"
+                          id="icon"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleIconChange}
                           className={cn(
-                            errors.custom_domain ? 'border-destructive' : '',
+                            'pr-10',
+                            errors.icon ? 'border-destructive' : '',
                           )}
                         />
-                        {errors.custom_domain && (
+                        {(iconPreview || data.icon) && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="hover:text-destructive-foreground absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 hover:bg-muted"
+                            onClick={removeIcon}
+                          >
+                            <XIcon className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {iconPreview && (
+                        <div className="mt-4 flex justify-center">
+                          <img
+                            src={iconPreview}
+                            alt="Icon preview"
+                            className="h-24 w-24 rounded-lg border object-cover"
+                          />
+                        </div>
+                      )}
+                      {errors.icon && (
+                        <p className="mt-2 text-sm text-destructive">
+                          {errors.icon}
+                        </p>
+                      )}
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Optional. Upload a square image (PNG, JPG, GIF, WebP).
+                        Maximum size: 2MB.
+                      </p>
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex items-center space-x-3">
+                      <Switch
+                        id="external_access"
+                        checked={data.external_access}
+                        onCheckedChange={(checked: boolean) =>
+                          setData('external_access', checked)
+                        }
+                      />
+                      <div>
+                        <Label htmlFor="external_access">External Access</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Allow external applications to access this mod via API
+                        </p>
+                      </div>
+                      {errors.external_access && (
+                        <p className="mt-1 text-sm text-destructive">
+                          {errors.external_access}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* GitHub Sync Tab */}
+              <TabsContent value="github-sync">
+                <Card className="bg-transparent">
+                  <CardHeader className="border-b pb-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>GitHub Sync</CardTitle>
+                        <CardDescription>
+                          When a GitHub URL is configured, pages are managed by
+                          sync and manual page create/edit is disabled.
+                        </CardDescription>
+                      </div>
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <HelpCircle className="h-6 w-6 cursor-pointer text-muted-foreground" />
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80" side="left">
+                          <div className="flex justify-between space-x-4">
+                            <div className="space-y-1">
+                              <p className="mb-5 text-sm">
+                                If your documentation already lives on GitHub,
+                                you can sync it directly with your mod wiki.
+                                Changes pushed to your repository will
+                                automatically appear on the site — no manual
+                                updates needed.
+                              </p>
+                              <p className="text-sm">
+                                If you want to read more about the feature,
+                                check out the documentation:
+                              </p>
+                              <div className="mt-2">
+                                <a
+                                  href="https://hytalemodding.dev/en/docs/wiki/6-github"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center text-sm text-secondary-foreground hover:underline"
+                                >
+                                  GitHub Sync Documentation
+                                  <ExternalLinkIcon className="ml-1 h-4 w-4" />
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="github_repository_url">
+                          GitHub Repository URL
+                        </Label>
+                        <Input
+                          id="github_repository_url"
+                          type="url"
+                          value={data.github_repository_url}
+                          onChange={(e) =>
+                            setData('github_repository_url', e.target.value)
+                          }
+                          placeholder="https://github.com/owner/repository"
+                          className={cn(
+                            errors.github_repository_url
+                              ? 'border-destructive'
+                              : '',
+                          )}
+                        />
+                        {errors.github_repository_url && (
                           <p className="mt-1 text-sm text-destructive">
-                            {errors.custom_domain}
+                            {errors.github_repository_url}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label htmlFor="github_repository_path">
+                          Repository Path
+                        </Label>
+                        <Input
+                          id="github_repository_path"
+                          type="text"
+                          value={data.github_repository_path}
+                          onChange={(e) =>
+                            setData('github_repository_path', e.target.value)
+                          }
+                          placeholder="docs"
+                          className={cn(
+                            errors.github_repository_path
+                              ? 'border-destructive'
+                              : '',
+                          )}
+                        />
+                        {errors.github_repository_path && (
+                          <p className="mt-1 text-sm text-destructive">
+                            {errors.github_repository_path}
                           </p>
                         )}
                         <p className="mt-2 text-sm text-muted-foreground">
-                          Point this host to {appHost} with a CNAME. Changing the domain resets verification.
+                          Optional subfolder to sync markdown from (for example:
+                          docs/guides). Leave blank to sync the repository root.
                         </p>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-                      {hasSavedCustomDomain && mod.domain_verification_token && (
-                        <div className="rounded-md border p-3 text-sm">
-                          <p className="font-medium">DNS TXT verification</p>
-                          <p className="mt-1 text-muted-foreground">
-                            Add this TXT record to prove domain ownership.
-                          </p>
-                          <div className="mt-2 space-y-2">
-                            <div>
-                              <p className="text-xs font-medium uppercase text-muted-foreground">
-                                Host / Name
+              {/* Custom CSS Tab */}
+              <TabsContent value="custom-css">
+                <Card className="bg-transparent">
+                  <CardHeader className="border-b pb-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Custom CSS</CardTitle>
+                        <CardDescription>
+                          Write CSS that will be injected into all public-facing
+                          pages of this mod. Use with care — this affects all
+                          visitors.
+                        </CardDescription>
+                      </div>
+
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <HelpCircle className="h-6 w-6 cursor-pointer text-muted-foreground" />
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80" side="left">
+                          <div className="flex justify-between space-x-4">
+                            <div className="space-y-1">
+                              <p className="mb-5 text-sm">
+                                The wiki supports custom CSS, letting you change
+                                colors, typography, spacing, and more. To make
+                                the most of it, a basic understanding of CSS is
+                                recommended.
                               </p>
-                              <code className="mt-1 block rounded bg-muted p-2 text-xs">
-                                {savedCustomDomain}
-                              </code>
-                            </div>
-                            <div>
-                              <p className="text-xs font-medium uppercase text-muted-foreground">
-                                Value / Content (use the full string)
+                              <p className="text-sm">
+                                If you want to read more about this feature,
+                                check out the documentation:
                               </p>
-                              <code className="mt-1 block rounded bg-muted p-2 text-xs">
-                                {mod.domain_verification_token}
-                              </code>
+                              <div className="mt-2">
+                                <a
+                                  href="https://hytalemodding.dev/en/docs/wiki/5-styling/5-3-custom-css"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center text-sm text-secondary-foreground hover:underline"
+                                >
+                                  Custom CSS Documentation
+                                  <ExternalLinkIcon className="ml-1 h-4 w-4" />
+                                </a>
+                              </div>
                             </div>
                           </div>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            Do not split the value after =. Paste the whole token exactly as shown.
-                          </p>
-                        </div>
-                      )}
-
-                      {hasSavedCustomDomain && (
-                        <div className="flex items-center gap-3">
-                          <Badge
-                            variant="outline"
-                            className={
-                              mod.domain_verified
-                                ? 'border-green-600 text-green-700'
-                                : 'border-amber-600 text-amber-700'
-                            }
-                          >
-                            {mod.domain_verified ? 'Verified' : 'Unverified'}
-                          </Badge>
-                          {!mod.domain_verified && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={verifyDomain}
-                              disabled={verifyingDomain}
-                            >
-                              {verifyingDomain ? 'Checking DNS...' : 'Verify domain'}
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                        </HoverCardContent>
+                      </HoverCard>
                     </div>
-                  */}
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <Label>CSS Editor</Label>
+                      <p className="mt-1 mb-3 text-sm text-muted-foreground">
+                        Open the full-screen CSS editor with live preview for
+                        easier editing.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={openCssEditor}
+                        disabled={processing}
+                        className="border-violet-500/40 bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 hover:text-violet-600 dark:text-violet-400"
+                      >
+                        <span>✨</span>
+                        {processing ? 'Saving...' : 'Open CSS Editor'}
+                      </Button>
+                    </div>
 
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label htmlFor="custom_css">Custom CSS</Label>
+                    <Separator />
                     <div className="relative overflow-hidden rounded-md border border-border/70 bg-muted/10 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30">
                       <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-3 py-1.5">
                         <span className="text-xs font-medium text-muted-foreground">
@@ -499,37 +602,10 @@ export default function EditMod({ mod }: Props) {
                         {errors.custom_css}
                       </p>
                     )}
-                    <p className="text-sm text-muted-foreground">
-                      Write CSS that will be injected into all public-facing
-                      pages of this mod. Use with care — this affects all
-                      visitors.
-                    </p>
-                  </div>
-
-                  <Separator />
-                  <div className="flex items-center space-x-3">
-                    <Switch
-                      id="external_access"
-                      checked={data.external_access}
-                      onCheckedChange={(checked: boolean) =>
-                        setData('external_access', checked)
-                      }
-                    />
-                    <div>
-                      <Label htmlFor="external_access">External Access</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Allow external applications to access this mod via API
-                      </p>
-                    </div>
-                    {errors.external_access && (
-                      <p className="mt-1 text-sm text-destructive">
-                        {errors.external_access}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
 
           <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
