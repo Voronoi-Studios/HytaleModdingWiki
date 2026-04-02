@@ -23,19 +23,59 @@
 }
 
 :root {
+  --markdown-text-fg: var(--color-foreground);
+  --markdown-muted-fg: var(--color-muted-foreground);
+
+  --markdown-link-color: var(--color-primary);
+  --markdown-link-hover-color: var(--color-accent-foreground);
+
+  --markdown-list-marker: var(--color-muted-foreground);
+
   --markdown-code-block-bg: var(--color-muted);
   --markdown-code-block-fg: var(--color-primary);
+  
   --markdown-inline-code-bg: color-mix(
     in oklab,
     var(--color-muted-foreground) 20%,
     transparent
   );
   --markdown-inline-code-fg: var(--color-primary);
+
   --markdown-callout-note-border: var(--chart-2);
   --markdown-callout-tip-border: var(--chart-3);
   --markdown-callout-important-border: var(--chart-4);
   --markdown-callout-warning-border: var(--chart-1);
   --markdown-callout-caution-border: var(--destructive);
+
+  --markdown-blockquote-border: var(--color-border);
+  --markdown-blockquote-fg: var(--color-muted-foreground);
+
+  --markdown-hr-color: var(--color-border);
+
+   --markdown-table-border: var(--color-border);
+  --markdown-table-header-border: var(--color-accent);
+}
+
+.prose :where(p):not(blockquote p),
+.prose li,
+.prose strong,
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: var(--markdown-text-fg);
+}
+
+.prose em,
+.prose del {
+  color: var(--markdown-muted-fg);
+}
+
+.prose strong em,
+.prose em strong {
+  color: var(--markdown-text-fg); 
 }
 
 .prose pre.hljs-code-block {
@@ -82,6 +122,36 @@
   border-radius: 0.5rem;
   padding: 1rem 1.25rem;
 }
+
+.prose blockquote {
+  border-left-color: var(--markdown-blockquote-border);
+  color: var(--markdown-blockquote-fg);
+}
+
+.prose hr {
+  border-color: var(--markdown-hr-color);
+}
+
+.prose a {
+  color: var(--markdown-link-color);
+}
+.prose a:hover {
+  color: var(--color-accent-foreground);
+}
+
+.prose ul > li::marker,
+.prose ol > li::marker {
+  color: var(--markdown-list-marker);
+}
+
+.prose table tr {
+  border-bottom-color: var(--markdown-table-border);
+}
+
+.prose table thead {
+  border-bottom-color: var(--markdown-table-header-border);
+}
+
 .prose .heading-container {
   position: relative;
 }
