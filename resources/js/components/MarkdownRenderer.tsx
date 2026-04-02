@@ -4,6 +4,7 @@ import { CheckIcon, LinkIcon } from 'lucide-react';
 import { marked } from 'marked';
 import markedFootnote from 'marked-footnote';
 import { gfmHeadingId } from 'marked-gfm-heading-id';
+import mermaid from 'mermaid';
 import 'highlight.js/styles/github-dark.css';
 import { useEffect, useRef, useState } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -118,6 +119,15 @@ const gfmAlertCalloutExtension = {
 };
 
 renderer.code = function ({ text, lang }: { text: string; lang?: string }) {
+  // Check if this is a mermaid diagram by language tag or by content
+  const isMermaid =
+    lang === 'mermaid' ||
+    text.match(/^\s*(sequenceDiagram|graph|classDiagram|stateDiagram|gantt|pie|erDiagram|journey|gitGraph|mindmap|timeline|block)/);
+
+  if (isMermaid) {
+    return `<pre class="mermaid">${escapeHtml(text)}</pre>`;
+  }
+
   const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
   const highlighted = hljs.highlight(text, { language }).value;
 
@@ -197,6 +207,12 @@ export default function MarkdownRenderer({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    // Initialize and render mermaid diagrams
+    const initMermaid = async () => {
+      await mermaid.contentLoaded();
+    };
+    initMermaid();
 
     const handleClick = (e: MouseEvent) => {
       const btn = (e.target as Element).closest(
