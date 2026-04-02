@@ -17,11 +17,11 @@ import {
 } from '@/components/ui/sheet';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
-import { dashboard, login, register } from '@/routes';
 import type { SharedData } from '@/types';
 import { mainNavItems } from '@/utils/commonUtils';
 import HytaleModdingLogo from './hytale-modding-logo';
 import { UserMenuContent } from './user-menu-content';
+import { dashboard, login, register } from '@/routes';
 
 interface AppNavbarProps {
   brandHref?: string;
