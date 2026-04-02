@@ -491,12 +491,13 @@ class ModController extends Controller
     public function publicShowResolved(Request $request)
     {
         $mod = $request->attributes->get('resolved_mod');
+        $user = Auth::user();
 
         if (! $mod instanceof Mod) {
             abort(404, 'Documentation not found');
         }
 
-        if (! in_array($mod->visibility, ['public', 'unlisted'], true)) {
+        if (! $this->canViewPublicDocumentation($mod, $user)) {
             abort(404, 'Documentation not found');
         }
 
@@ -563,13 +564,14 @@ class ModController extends Controller
     private function publicShowForSlug(Request $request, string $slug)
     {
         $resolvedMod = $request->attributes->get('resolved_mod');
+        $user = Auth::user();
 
         if ($resolvedMod instanceof Mod) {
             if ($resolvedMod->slug !== $slug) {
                 abort(404, 'Documentation not found');
             }
 
-            if (! in_array($resolvedMod->visibility, ['public', 'unlisted'], true)) {
+            if (! $this->canViewPublicDocumentation($resolvedMod, $user)) {
                 abort(404, 'Documentation not found');
             }
 
@@ -579,13 +581,25 @@ class ModController extends Controller
         }
 
         $mod = Mod::where('slug', $slug)
-            ->whereIn('visibility', ['public', 'unlisted'])
             ->with(['owner'])
             ->firstOrFail();
+
+        if (! $this->canViewPublicDocumentation($mod, $user)) {
+            abort(404, 'Documentation not found');
+        }
 
         return Inertia::render('Public/Mod', [
             'mod' => $this->buildPublicModPayload($mod),
         ]);
+    }
+
+    private function canViewPublicDocumentation(Mod $mod, ?User $user): bool
+    {
+        if (in_array($mod->visibility, ['public', 'unlisted'], true)) {
+            return true;
+        }
+
+        return $user ? $mod->canBeAccessedBy($user) : false;
     }
 
     private function buildPublicModPayload(Mod $mod): array

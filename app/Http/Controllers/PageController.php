@@ -475,6 +475,7 @@ class PageController extends Controller
      */
     public function publicShow(Mod $mod, Page $page, Request $request)
     {
+        $user = Auth::user();
         $resolvedMod = $request->attributes->get('resolved_mod');
         if ($resolvedMod instanceof Mod && $resolvedMod->id !== $mod->id) {
             abort(404, 'Documentation not found');
@@ -484,7 +485,7 @@ class PageController extends Controller
             abort(404);
         }
 
-        if ($mod->visibility === 'private') {
+        if (! $this->canViewPublicDocumentation($mod, $user)) {
             abort(404, 'Documentation not found');
         }
 
@@ -543,6 +544,7 @@ class PageController extends Controller
      */
     public function publicShowResolved(Request $request, string $pageSlug)
     {
+        $user = Auth::user();
         $mod = $request->attributes->get('resolved_mod');
 
         if (! $mod instanceof Mod) {
@@ -553,7 +555,20 @@ class PageController extends Controller
             ->where('slug', $pageSlug)
             ->firstOrFail();
 
+        if (! $this->canViewPublicDocumentation($mod, $user)) {
+            abort(404, 'Documentation not found');
+        }
+
         return $this->publicShow($mod, $page, $request);
+    }
+
+    private function canViewPublicDocumentation(Mod $mod, ?User $user): bool
+    {
+        if (in_array($mod->visibility, ['public', 'unlisted'], true)) {
+            return true;
+        }
+
+        return $user ? $mod->canBeAccessedBy($user) : false;
     }
 
     private function serializeMod(Mod $mod): array

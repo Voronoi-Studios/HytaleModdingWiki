@@ -317,6 +317,20 @@ class ModTest extends TestCase
         $response->assertNotFound(); // Private mods are not found in public routes
     }
 
+    public function test_owner_can_preview_private_mod_page()
+    {
+        $owner = User::factory()->create();
+        $mod = Mod::factory()->private()->create(['owner_id' => $owner->id]);
+        $this->actingAs($owner);
+
+        $response = $this->get(route('public.mod', $mod));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Public/Mod')
+        );
+    }
+
     public function test_mod_slug_is_generated_from_name()
     {
         $user = User::factory()->create();

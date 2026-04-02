@@ -169,6 +169,19 @@ class PageTest extends TestCase
         $response->assertInertia(fn ($page) => $page->component('Public/Page'));
     }
 
+    public function test_owner_can_preview_private_page_in_public_mod_route()
+    {
+        $owner = User::factory()->create();
+        $mod = Mod::factory()->private()->create(['owner_id' => $owner->id]);
+        $page = Page::factory()->create(['mod_id' => $mod->id, 'published' => true]);
+        $this->actingAs($owner);
+
+        $response = $this->get(route('public.page', ['mod' => $mod, 'page' => $page]));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->component('Public/Page'));
+    }
+
     public function test_public_page_navigation_includes_nested_descendants()
     {
         $owner = User::factory()->create();
