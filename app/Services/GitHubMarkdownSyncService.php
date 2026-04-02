@@ -285,6 +285,7 @@ class GitHubMarkdownSyncService
 
     /**
      * Group files by their folder path.
+     *
      * @param  array<int, array{path:string,sha:string,content:string}>  $files
      * @return array<string, array<int, array{path:string,sha:string,content:string}>>
      */
@@ -298,7 +299,7 @@ class GitHubMarkdownSyncService
                 $folder = '';
             }
 
-            if (!isset($grouped[$folder])) {
+            if (! isset($grouped[$folder])) {
                 $grouped[$folder] = [];
             }
 
@@ -310,6 +311,7 @@ class GitHubMarkdownSyncService
 
     /**
      * Extract index files from grouped files by folder.
+     *
      * @param  array<string, array<int, array{path:string,sha:string,content:string}>>  $filesByFolder
      * @return array<string, array{path:string,sha:string,content:string}>
      */
@@ -330,6 +332,7 @@ class GitHubMarkdownSyncService
 
     /**
      * Extract meta.json files from grouped files by folder.
+     *
      * @param  array<string, array<int, array{path:string,sha:string,content:string}>>  $filesByFolder
      * @return array<string, array{path:string,sha:string,content:string}>
      */
@@ -369,6 +372,7 @@ class GitHubMarkdownSyncService
     /**
      * Get the source path for the parent folder's index.md or category.
      * Returns null if at root level.
+     *
      * @param  array<string, array<int, array{path:string,sha:string,content:string}>>  $filesByFolder
      * @param  array<string, array{path:string,sha:string,content:string}>  $indexFiles
      */
@@ -417,6 +421,7 @@ class GitHubMarkdownSyncService
 
     /**
      * Process folder categories and index pages.
+     *
      * @param  array<string, array<int, array{path:string,sha:string,content:string}>>  $filesByFolder
      * @param  array<string, array{path:string,sha:string,content:string}>  $indexFiles
      * @param  array<string, array{path:string,sha:string,content:string}>  $metaFiles
@@ -431,8 +436,7 @@ class GitHubMarkdownSyncService
         array $metaFiles,
         $existingGithubPages,
         array &$pagesBySourcePath
-    ): array
-    {
+    ): array {
         $created = 0;
         $updated = 0;
         $deleted = 0;
@@ -449,7 +453,7 @@ class GitHubMarkdownSyncService
                 $metadata = $parsedContent['metadata'];
 
                 $isNew = false;
-                if (!$page) {
+                if (! $page) {
                     $isNew = true;
                     $page = new Page([
                         'mod_id' => $mod->id,
@@ -470,7 +474,7 @@ class GitHubMarkdownSyncService
                 $page->order_index = $this->resolveOrderIndex($metadata, 0);
                 $page->is_index = $sourcePath === 'index.md' || $sourcePath === 'README.md';
 
-                if (!$page->slug) {
+                if (! $page->slug) {
                     $page->slug = $this->buildUniqueSlug($mod, $page->title, $page->id);
                 }
 
@@ -482,12 +486,12 @@ class GitHubMarkdownSyncService
                 } else {
                     $updated++;
                 }
-            } else if ($folder !== '') {
+            } elseif ($folder !== '') {
                 $categorySourcePath = $folder;
                 $page = $existingGithubPages->get($categorySourcePath);
 
                 $isNew = false;
-                if (!$page) {
+                if (! $page) {
                     $isNew = true;
                     $page = new Page([
                         'mod_id' => $mod->id,
@@ -507,7 +511,7 @@ class GitHubMarkdownSyncService
                         }
                         $categoryMetadata = $metaData;
                     } else {
-                        \Log::warning('Invalid JSON in meta.json for folder: ' . $folder, [
+                        \Log::warning('Invalid JSON in meta.json for folder: '.$folder, [
                             'error' => json_last_error_msg(),
                             'path' => $metaFiles[$folder]['path'],
                         ]);
@@ -525,7 +529,7 @@ class GitHubMarkdownSyncService
                 $page->order_index = $categoryMetadata['order'] ?? 0;
                 $page->is_index = false;
 
-                if (!$page->slug) {
+                if (! $page->slug) {
                     $page->slug = $this->buildUniqueSlug($mod, $page->title, $page->id);
                 }
 
@@ -702,7 +706,6 @@ class GitHubMarkdownSyncService
 
         return $value;
     }
-
 
     private function buildUniqueSlug(Mod $mod, string $title, ?string $ignorePageId = null): string
     {

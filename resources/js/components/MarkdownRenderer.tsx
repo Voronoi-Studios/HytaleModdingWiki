@@ -122,7 +122,9 @@ renderer.code = function ({ text, lang }: { text: string; lang?: string }) {
   // Check if this is a mermaid diagram by language tag or by content
   const isMermaid =
     lang === 'mermaid' ||
-    text.match(/^\s*(sequenceDiagram|graph|classDiagram|stateDiagram|gantt|pie|erDiagram|journey|gitGraph|mindmap|timeline|block)/);
+    text.match(
+      /^\s*(sequenceDiagram|graph|classDiagram|stateDiagram|gantt|pie|erDiagram|journey|gitGraph|mindmap|timeline|block)/,
+    );
 
   if (isMermaid) {
     return `<pre class="mermaid">${escapeHtml(text)}</pre>`;

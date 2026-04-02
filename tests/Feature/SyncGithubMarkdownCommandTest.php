@@ -212,7 +212,6 @@ class SyncGithubMarkdownCommandTest extends TestCase
         $this->assertNull($stalePage->deleted_at);
     }
 
-
     private function fakeRepoContents(string $installContent, string $installSha = 'sha-install', bool $includeGettingStarted = true): void
     {
         $rootListing = [
