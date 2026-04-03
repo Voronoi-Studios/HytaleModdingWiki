@@ -26,8 +26,8 @@
   --markdown-text-fg: var(--color-foreground);
   --markdown-muted-fg: var(--color-muted-foreground);
 
-  --markdown-link-color: var(--color-primary);
-  --markdown-link-hover-color: var(--color-accent-foreground);
+  --markdown-link: var(--color-primary);
+  --markdown-link-hover: var(--color-accent-foreground);
 
   --markdown-list-marker: var(--color-muted-foreground);
 
@@ -50,10 +50,12 @@
   --markdown-blockquote-border: var(--color-border);
   --markdown-blockquote-fg: var(--color-muted-foreground);
 
-  --markdown-hr-color: var(--color-border);
+  --markdown-hr: var(--color-border);
 
   --markdown-table-border: var(--color-border);
   --markdown-table-header-border: var(--color-accent);
+  --markdown-table-header: var(--color-primary);
+  --markdown-table: var(--color-muted-foreground);
 }
 
 .prose :where(p):not(blockquote p),
@@ -129,14 +131,14 @@
 }
 
 .prose hr {
-  border-color: var(--markdown-hr-color);
+  border-color: var(--markdown-hr);
 }
 
 .prose a {
-  color: var(--markdown-link-color);
+  color: var(--markdown-link);
 }
 .prose a:hover {
-  color: var(--color-accent-foreground);
+  color: var(--markdown-link-hover);
 }
 
 .prose ul > li::marker,
@@ -146,10 +148,15 @@
 
 .prose table tr {
   border-bottom-color: var(--markdown-table-border);
+  color: var(--markdown-table-header);
 }
 
 .prose table thead {
   border-bottom-color: var(--markdown-table-header-border);
+}
+
+.prose th {
+  color: var(--markdown-table);
 }
 
 .prose .heading-container {
