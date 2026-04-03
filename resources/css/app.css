@@ -54,6 +54,8 @@
 
   --markdown-table-border: var(--color-border);
   --markdown-table-header-border: var(--color-accent);
+  --markdown-table-header-color: var(--color-primary);
+  --markdown-table-color: var(--color-muted-foreground);
 }
 
 .prose :where(p):not(blockquote p),
@@ -146,10 +148,15 @@
 
 .prose table tr {
   border-bottom-color: var(--markdown-table-border);
+  color: var(--markdown-table-header-color);
 }
 
 .prose table thead {
   border-bottom-color: var(--markdown-table-header-border);
+}
+
+.prose th {
+  color: var(--markdown-table-color);
 }
 
 .prose .heading-container {
