@@ -151,9 +151,9 @@ export default function EditMod({ mod }: Props) {
         },
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { message?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        message?: string;
+      } | null;
 
       if (!response.ok) {
         setSyncFeedback({
