@@ -77,6 +77,11 @@ export default function EditMod({ mod }: Props) {
   const [iconPreview, setIconPreview] = useState<string | null>(
     mod.icon_url || null,
   );
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   // const [verifyingDomain, setVerifyingDomain] = useState(false);
 
   const { data, setData, patch, processing, errors } = useForm({
@@ -128,6 +133,44 @@ export default function EditMod({ mod }: Props) {
         window.location.href = `/dashboard/mods/${mod.slug}/css-editor`;
       },
     });
+  };
+
+  const runGithubSync = async () => {
+    setIsSyncing(true);
+    setSyncFeedback(null);
+
+    try {
+      const response = await fetch(`/dashboard/mods/${mod.slug}/github-sync`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'X-CSRF-TOKEN':
+            document
+              .querySelector('meta[name="csrf-token"]')
+              ?.getAttribute('content') || '',
+        },
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { message?: string }
+        | null;
+
+      if (!response.ok) {
+        setSyncFeedback({
+          type: 'error',
+          message: payload?.message || 'GitHub sync failed.',
+        });
+
+        return;
+      }
+
+      setSyncFeedback({
+        type: 'success',
+        message: payload?.message || 'GitHub sync completed successfully.',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const deleteMod = () => {
@@ -504,6 +547,36 @@ export default function EditMod({ mod }: Props) {
                           Optional subfolder to sync markdown from (for example:
                           docs/guides). Leave blank to sync the repository root.
                         </p>
+                      </div>
+
+                      <div className="rounded-md border border-border/70 bg-muted/10 p-4">
+                        <div className="mb-3">
+                          <Label>Manual Sync</Label>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Pull markdown from your configured GitHub repository
+                            right now.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={runGithubSync}
+                          disabled={isSyncing || processing}
+                        >
+                          {isSyncing ? 'Running Sync...' : 'Run Sync'}
+                        </Button>
+                        {syncFeedback && (
+                          <p
+                            className={cn(
+                              'mt-3 text-sm',
+                              syncFeedback.type === 'success'
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-destructive',
+                            )}
+                          >
+                            {syncFeedback.message}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
