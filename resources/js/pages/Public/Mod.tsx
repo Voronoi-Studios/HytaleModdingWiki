@@ -113,8 +113,8 @@ export default function PublicMod({ mod }: Props) {
       />
 
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 xl:gap-10">
-        <aside className="lg:col-span-4 xl:col-span-3">
-          <div className="sticky top-20 space-y-4">
+        <aside className="lg:col-span-4 lg:self-start xl:col-span-3">
+          <div className="space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1 lg:[-ms-overflow-style:none] lg:[scrollbar-width:none] lg:[&::-webkit-scrollbar]:hidden">
             <div className="px-1 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
               Mod Details
             </div>

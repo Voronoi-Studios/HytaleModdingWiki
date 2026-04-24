@@ -298,7 +298,6 @@ class SyncGithubMarkdownCommandTest extends TestCase
         ]);
     }
 
-
     private function fakeRepoContentsWithInstallInGuideFolder(): void
     {
         Http::fake([
