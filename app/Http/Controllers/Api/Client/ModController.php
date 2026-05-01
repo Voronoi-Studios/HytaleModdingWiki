@@ -6,6 +6,7 @@ use App\Models\Mod;
 use App\Models\Page;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ModController extends ClientController
 {
@@ -52,7 +53,6 @@ class ModController extends ClientController
                 $query->where('id', $modIdentifier)
                     ->orWhere('slug', $modIdentifier);
             })
-            ->with('owner')
             ->firstOrFail();
 
         if (! $mod->canBeAccessedBy(Auth::user()) || ! $mod->external_access) {
@@ -128,6 +128,101 @@ class ModController extends ClientController
             'parent' => $page->parent ? $this->pagePayload($page->parent) : null,
             'children' => $page->children()->orderBy('order_index')->get()->map(function (Page $child) {
                 return $this->pagePayload($child);
+            })->values()->toArray(),
+        ]);
+    }
+
+    /**
+     * Search pages for a mod by title, slug, or content.
+     */
+    public function search(Request $request)
+    {
+        $modIdentifier = $request->route('mod');
+        $validated = $request->validate([
+            'query' => 'required|string|min:2|max:120',
+            'limit' => 'nullable|integer|min:1|max:25',
+        ]);
+
+        $searchQuery = trim((string) $validated['query']);
+        $limit = (int) ($validated['limit'] ?? 10);
+
+        $mod = Mod::where('visibility', 'public')
+            ->where(function ($query) use ($modIdentifier) {
+                $query->where('id', $modIdentifier)
+                    ->orWhere('slug', $modIdentifier);
+            })
+            ->firstOrFail();
+
+        if (! $mod->canBeAccessedBy(Auth::user()) || ! $mod->external_access) {
+            return response()->json(['error' => 'Access denied. You do not have permission to view this mod.'], 403);
+        }
+
+        $literalQuery = preg_replace('/\s+/', ' ', trim(str_replace(['%', '_'], ' ', $searchQuery))) ?? '';
+
+        if (Str::length($literalQuery) < 2) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [
+                    'query' => ['Query must include at least two searchable characters.'],
+                ],
+            ], 422);
+        }
+
+        $queryPattern = '%'.$literalQuery.'%';
+
+        $slugQuery = Str::slug($searchQuery);
+        $slugNeedle = $slugQuery !== '' ? Str::lower($slugQuery) : '__never_match_slug__';
+        $slugPattern = '%'.$slugNeedle.'%';
+
+        $pages = $mod->pages()
+            ->where('published', true)
+            ->where(function ($query) use ($queryPattern, $slugPattern) {
+                $query->where('title', 'like', $queryPattern)
+                    ->orWhere('slug', 'like', $slugPattern)
+                    ->orWhere('content', 'like', $queryPattern);
+            })
+            ->orderByRaw(
+                'CASE
+                    WHEN title = ? THEN 0
+                    WHEN slug = ? THEN 1
+                    WHEN title LIKE ? THEN 2
+                    WHEN slug LIKE ? THEN 3
+                    WHEN title LIKE ? THEN 4
+                    WHEN slug LIKE ? THEN 5
+                    ELSE 6
+                END',
+                [
+                    $literalQuery,
+                    $slugNeedle,
+                    $literalQuery.'%',
+                    $slugNeedle.'%',
+                    $queryPattern,
+                    $slugPattern,
+                ]
+            )
+            ->orderBy('title')
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'mod' => [
+                'id' => $mod->id,
+                'name' => $mod->name,
+                'slug' => $mod->slug,
+            ],
+            'query' => $searchQuery,
+            'results' => $pages->map(function (Page $page) use ($mod) {
+                return [
+                    ...$this->pagePayload($page),
+                    'url' => route('public.page', [
+                        'mod' => $mod->slug,
+                        'page' => $page->slug,
+                    ]),
+                    'snippet' => Str::limit(
+                        preg_replace('/\s+/', ' ', trim((string) $page->content)) ?? '',
+                        180
+                    ),
+                ];
             })->values()->toArray(),
         ]);
     }
