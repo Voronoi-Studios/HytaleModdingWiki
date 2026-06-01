@@ -8,6 +8,7 @@ import mermaid from 'mermaid';
 import 'highlight.js/styles/github-dark.css';
 import { useEffect, useRef, useState } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { useAppearance } from '@/hooks/use-appearance';
 
 interface MarkdownRendererProps {
   content: string | null | undefined;
@@ -194,7 +195,9 @@ export default function MarkdownRenderer({
 }: MarkdownRendererProps) {
   const [htmlContent, setHtmlContent] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const { resolvedAppearance } = useAppearance();
   const safeContent = content ?? '';
+  const mermaidTheme = resolvedAppearance === 'dark' ? 'dark' : 'default';
 
   useEffect(() => {
     const parseContent = async () => {
@@ -211,10 +214,18 @@ export default function MarkdownRenderer({
     if (!container) return;
 
     // Initialize and render mermaid diagrams
-    const initMermaid = async () => {
-      await mermaid.contentLoaded();
+    const renderMermaid = async () => {
+      const diagrams = container.querySelectorAll<HTMLElement>('pre.mermaid');
+      if (diagrams.length === 0) return;
+
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: mermaidTheme,
+      });
+
+      await mermaid.run({ nodes: diagrams });
     };
-    initMermaid();
+    void renderMermaid();
 
     const handleClick = (e: MouseEvent) => {
       const btn = (e.target as Element).closest(
@@ -237,10 +248,11 @@ export default function MarkdownRenderer({
 
     container.addEventListener('click', handleClick);
     return () => container.removeEventListener('click', handleClick);
-  }, [htmlContent]);
+  }, [htmlContent, mermaidTheme]);
 
   return (
     <div
+      key={mermaidTheme}
       ref={containerRef}
       className={`prose max-w-none prose-slate dark:prose-invert ${className}`}
       dangerouslySetInnerHTML={{ __html: htmlContent }}
