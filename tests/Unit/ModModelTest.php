@@ -141,7 +141,7 @@ class ModModelTest extends TestCase
         $this->assertTrue($mod->userCan($admin, 'edit'));
         $this->assertTrue($mod->userCan($admin, 'manage_collaborators'));
         $this->assertFalse($mod->userCan($admin, 'delete'));
-        $this->assertFalse($mod->userCan($admin, 'manage_settings'));
+        $this->assertTrue($mod->userCan($admin, 'manage_settings'));
     }
 
     public function test_editor_has_correct_permissions()
