@@ -17,8 +17,15 @@ Before you start, make sure you have the following installed:
 You also need these PHP extensions enabled:
 
 - `fileinfo`
+- `iconv`
 - `pdo_sqlite`
 - `sqlite3`
+
+You can check the PHP extensions required by the lockfile with:
+
+```bash
+composer check-platform-reqs
+```
 
 ## Getting Started
 
@@ -103,6 +110,24 @@ To rebuild your local database from scratch and seed it again:
 ```bash
 php artisan migrate:fresh --seed
 ```
+
+## Troubleshooting
+
+If `composer install` fails with a message like `requires ext-iconv`, your PHP CLI installation is missing a required extension. Composer can detect and report missing extensions, but extensions are installed through your operating system, package manager, PHP version manager, or Docker image.
+
+Run this to see which `php.ini` file your terminal PHP is using:
+
+```bash
+php --ini
+```
+
+Run this to list enabled PHP extensions:
+
+```bash
+php -m
+```
+
+For the most reproducible local setup, use a PHP environment manager or Docker image that includes the required extensions instead of installing extensions one by one on each machine.
 
 ## Contributing
 
