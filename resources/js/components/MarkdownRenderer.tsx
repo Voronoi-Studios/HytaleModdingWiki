@@ -202,7 +202,10 @@ export default function MarkdownRenderer({
   useEffect(() => {
     const parseContent = async () => {
       const html = await marked.parse(safeContent);
-      const sanitized = DOMPurify.sanitize(html);
+      const sanitized = DOMPurify.sanitize(html, {
+          ADD_TAGS: ['node-graph'],
+          ADD_ATTR: ['src', 'steps-src', 'start-step', 'can-step'],
+      });
       setHtmlContent(addHeadingAnchors(sanitized));
     };
 
