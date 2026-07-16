@@ -36,12 +36,15 @@ export default function AppFooter() {
                 </Link>
               </li>
               <li>
-                <Link
+                <a
                   href="https://status.hytalemodding.dev"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Status
-                </Link>
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </a>
               </li>
             </ul>
           </div>
