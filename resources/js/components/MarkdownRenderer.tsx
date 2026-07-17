@@ -203,8 +203,9 @@ export default function MarkdownRenderer({
     const parseContent = async () => {
       const html = await marked.parse(safeContent);
       const sanitized = DOMPurify.sanitize(html, {
+          // Whitelist custom tag and attributes needed for node-graph component
           ADD_TAGS: ['node-graph'],
-          ADD_ATTR: ['src', 'steps-src', 'start-step', 'can-step'],
+          ADD_ATTR: ['src', 'steps-src', 'start-step', 'can-step'], //force-expand is left out on purpose
       });
       setHtmlContent(addHeadingAnchors(sanitized));
     };
